@@ -24,7 +24,7 @@ export default async function CheckEmailPage({
       </p>
       <p className="mt-4 text-caption text-charcoal-stone">Didn&apos;t get it? Check spam, or</p>
       {email ? (
-        <ResendVerification email={email} className="mt-3 flex justify-center" />
+        <ResendVerification email={email} className="mt-3" />
       ) : (
         <ResendVerification className="mt-3 text-left" />
       )}

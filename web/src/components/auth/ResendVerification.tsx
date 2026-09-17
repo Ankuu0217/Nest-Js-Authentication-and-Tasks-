@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/Label";
 import { FieldError } from "@/components/ui/FieldError";
 import { resendVerification } from "@/lib/api/auth-client";
 import { ApiError } from "@/lib/api/errors";
+import { cn } from "@/lib/utils";
 
-const COOLDOWN_MS = 30_000;
+const COOLDOWN_SECONDS = 30;
 
 /**
  * "Resend verification email" — used both where the email is already known
@@ -28,18 +29,29 @@ export function ResendVerification({
   className?: string;
 }) {
   const [email, setEmail] = useState(knownEmail ?? "");
-  const [onCooldown, setOnCooldown] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(0);
 
   const mutation = useMutation({
     mutationFn: (value: string) => resendVerification(value),
   });
 
+  // Starts (or restarts) the visible countdown on every successful send.
   useEffect(() => {
-    if (!mutation.isSuccess) return;
-    setOnCooldown(true);
-    const id = setTimeout(() => setOnCooldown(false), COOLDOWN_MS);
-    return () => clearTimeout(id);
+    if (mutation.isSuccess) setSecondsLeft(COOLDOWN_SECONDS);
   }, [mutation.isSuccess, mutation.data]);
+
+  // Ticks the countdown down one second at a time. A self-rescheduling
+  // setTimeout (not setInterval) keyed on secondsLeft avoids drift and
+  // stale-closure bugs — each tick reads the count current to that render.
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const id = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [secondsLeft]);
+
+  const onCooldown = secondsLeft > 0;
+  const buttonLabel = (idleLabel: string) =>
+    onCooldown ? `Resend in ${secondsLeft}s` : idleLabel;
 
   const errorMessage = mutation.isError
     ? mutation.error instanceof ApiError
@@ -49,7 +61,7 @@ export function ResendVerification({
 
   if (knownEmail) {
     return (
-      <div className={className}>
+      <div className={cn("flex flex-col items-center gap-2", className)}>
         <Button
           type="button"
           variant="neutral-bordered"
@@ -57,10 +69,10 @@ export function ResendVerification({
           disabled={onCooldown}
           onClick={() => mutation.mutate(knownEmail)}
         >
-          Resend verification email
+          {buttonLabel("Resend verification email")}
         </Button>
-        {mutation.isSuccess && (
-          <p className="mt-2 text-caption text-forest-green" role="status">
+        {mutation.isSuccess && onCooldown && (
+          <p className="text-caption text-forest-green" role="status">
             New link sent — check your inbox.
           </p>
         )}
@@ -96,10 +108,10 @@ export function ResendVerification({
           disabled={onCooldown || !email}
           className="shrink-0"
         >
-          Resend
+          {buttonLabel("Resend")}
         </Button>
       </div>
-      {mutation.isSuccess && (
+      {mutation.isSuccess && onCooldown && (
         <p className="mt-2 text-caption text-forest-green" role="status">
           If that email needs verifying, a new link is on its way.
         </p>

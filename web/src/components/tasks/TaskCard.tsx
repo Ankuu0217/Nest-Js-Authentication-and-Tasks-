@@ -47,24 +47,23 @@ export function TaskCard({ task, onEdit, onDelete, dragOverlay = false }: TaskCa
     <div
       ref={dragOverlay ? undefined : setNodeRef}
       style={style}
+      {...(dragOverlay ? {} : attributes)}
+      {...(dragOverlay ? {} : listeners)}
+      aria-roledescription="draggable task"
       className={cn(
-        "rounded-xl border border-sand-gray bg-paper-white p-4 shadow-subtle-2",
+        "cursor-grab touch-none rounded-xl border border-sand-gray bg-paper-white p-4 shadow-subtle-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-electric-violet active:cursor-grabbing",
         isDragging && "opacity-40",
         dragOverlay && "rotate-2 shadow-subtle-3",
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-start gap-2">
-          <button
-            type="button"
-            {...attributes}
-            {...listeners}
-            aria-label={`Reorder ${task.title}`}
-            aria-roledescription="draggable task"
-            className="mt-0.5 shrink-0 cursor-grab touch-none rounded p-0.5 text-slate-warm hover:text-charcoal-stone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-electric-violet active:cursor-grabbing"
+          <span
+            aria-hidden="true"
+            className="mt-0.5 shrink-0 rounded p-0.5 text-slate-warm"
           >
-            <GripVertical className="size-4" aria-hidden="true" />
-          </button>
+            <GripVertical className="size-4" />
+          </span>
           <p className="min-w-0 truncate text-[15px] font-semibold text-ink-black">{task.title}</p>
         </div>
         <DropdownMenu>

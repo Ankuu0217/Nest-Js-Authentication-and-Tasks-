@@ -128,6 +128,18 @@
   }
 }
 
+/* Countdown bar on the "task moved" toast — full animation shorthand is set
+   inline per-toast (duration must match the toast's own auto-dismiss time,
+   which varies), so this keyframe only needs to define the shape. */
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 :root {
   color-scheme: light;
 }

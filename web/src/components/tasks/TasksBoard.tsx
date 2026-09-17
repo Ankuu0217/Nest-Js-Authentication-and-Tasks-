@@ -47,6 +47,33 @@ const STATUS_FILTERS: { value: TaskStatus | "all"; label: string }[] = [
   { value: "done", label: "Done" },
 ];
 
+// Same solid hue each status's Badge is built from (see Badge's tone map),
+// not the pale badge background tint — a thin bar needs to actually read as
+// a color, not disappear against the toast's paper-white surface.
+const STATUS_BAR_COLOR: Record<TaskStatus, string> = {
+  todo: "bg-charcoal-stone",
+  in_progress: "bg-sunshine-yellow",
+  done: "bg-forest-green",
+};
+
+const MOVE_TOAST_DURATION_MS = 3000;
+
+function showTaskMovedToast(taskTitle: string, targetStatus: TaskStatus, targetLabel: string) {
+  toast.custom(() => (
+    <div className="relative w-full overflow-hidden rounded-xl border border-sand-gray bg-paper-white px-4 py-3 shadow-subtle">
+      <p className="text-body-sm text-ink-black">
+        <span className="font-medium">{taskTitle}</span> moved to {targetLabel}
+      </p>
+      <div className="absolute inset-x-0 bottom-0 h-1 bg-linen-beige">
+        <div
+          className={cn("h-full origin-left", STATUS_BAR_COLOR[targetStatus])}
+          style={{ animation: `toast-progress ${MOVE_TOAST_DURATION_MS}ms linear forwards` }}
+        />
+      </div>
+    </div>
+  ), { duration: MOVE_TOAST_DURATION_MS });
+}
+
 type PanelState = { mode: "create" } | { mode: "edit"; task: Task } | null;
 
 export function TasksBoard() {
@@ -136,10 +163,10 @@ export function TasksBoard() {
 
     if (!targetStatus || targetStatus === task.status) return;
 
+    const targetLabel = COLUMNS.find((c) => c.status === targetStatus)?.label ?? targetStatus;
     updateMutation.mutate({ id: task.id, input: { status: targetStatus } });
-    setLiveMessage(
-      `${task.title} moved to ${COLUMNS.find((c) => c.status === targetStatus)?.label}`,
-    );
+    setLiveMessage(`${task.title} moved to ${targetLabel}`);
+    showTaskMovedToast(task.title, targetStatus, targetLabel);
   }
 
   function handleDelete(task: Task) {
@@ -280,6 +307,7 @@ export function TasksBoard() {
         />
       ) : view === "board" ? (
         <DndContext
+          id="tasks-board"
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}

@@ -43,12 +43,38 @@ export class UserService {
         return updatedUser;
     }
 
+    // Only ever called from AdminController — deliberately returns none of
+    // passwordHash / refreshTokenHash / verificationToken / resetToken, which
+    // .returning() with no column list would otherwise include in full.
     async delete(id: string) {
-        const [deletedUser] = await db.delete(user).where(eq(user.id, id)).returning();
+        const [deletedUser] = await db
+            .delete(user)
+            .where(eq(user.id, id))
+            .returning({
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                isVerified: user.isVerified,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+            });
         return deletedUser;
     }
 
+    // Same reasoning as delete() above — an admin-facing user list must never
+    // include password hashes or live session/reset/verification tokens.
     async findAll() {
-        return db.query.user.findMany();
+        return db.query.user.findMany({
+            columns: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                isVerified: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
     }
 }

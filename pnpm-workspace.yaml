@@ -1,0 +1,13 @@
+packages:
+  - 'web'
+
+allowBuilds:
+  '@scarf/scarf': false
+  esbuild: false
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@tanstack/query-core@5.103.1'
+  - '@tanstack/react-query@5.103.1'
+  - framer-motion@13.4.0
+  - motion@13.4.0
